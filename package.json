@@ -1,0 +1,20 @@
+{
+  "name": "cse340-pnpm",
+  "version": "1.0.0",
+  "description": "First Project of Unit 1",
+  "scripts": {
+    "dev": "nodemon --env-file=.env server.js",
+    "start": "node --env-file=.env server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "Alex Dombroski",
+  "license": "ISC"
+}
