@@ -34,7 +34,13 @@ app.get('/contact', (req, res) => {
     const content = '<h1>Welcome to the Contact Page</h1>';
     res.render('index', { title, content, MODE, PORT });
 });
-
+// Account page
+app.get('/account/:name/:id', (req, res) => {
+    const title = "Account Page";
+    const { name, id } = req.params;
+    const content = `<h1>Welcome, ${name}!</h1><p>Your account ID is ${id}.</p>`;
+    res.render('index', { title, content, MODE, PORT });
+});
 
 // When in development mode, start a WebSocket server for live reloading
 if (MODE.includes('dev')) {
