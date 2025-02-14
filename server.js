@@ -17,6 +17,38 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
+// Middleware
+app.use((req, res, next) => {
+    console.log(`Method: ${req.method}, URL: ${req.url}`);
+    next(); // Pass control to the next middleware or route
+});
+app.use((req, res, next) => {
+    req.timestamp = new Date().toISOString();
+    next();
+});
+// ID validation middleware
+const validateId = (req, res, next) => {
+    const { id } = req.params;
+    if (isNaN(id)) {
+        return res.status(400).send('Invalid ID: must be a number.');
+    }
+    next(); // Pass control to the next middleware or route
+};
+// Middleware to validate name
+const validateName = (req, res, next) => {
+    const { name } = req.params;
+    if (!/^[a-zA-Z]+$/.test(name)) {
+        return res.status(400).send('Invalid name: must only contain letters.');
+    }
+    next();
+};
+
+// Global middleware to set a custom header
+app.use((req, res, next) => {
+    res.setHeader('X-Powered-By', 'Express Middleware Tutorial');
+    next();
+});
+
 // Route the Pages
 // Example of the home route using the layout
 app.get('/', (req, res) => {
@@ -35,10 +67,15 @@ app.get('/contact', (req, res) => {
     res.render('index', { title, content, MODE, PORT });
 });
 // Account page
-app.get('/account/:name/:id', (req, res) => {
+// Account page route with ID and name validation
+app.get('/account/:name/:id', validateId, validateName, (req, res) => {
     const title = "Account Page";
     const { name, id } = req.params;
-    const content = `<h1>Welcome, ${name}!</h1><p>Your account ID is ${id}.</p>`;
+    const isEven = id % 2 === 0 ? "even" : "odd";
+    const content = `
+        <h1>Welcome, ${name}!</h1>
+        <p>Your account ID is ${id}, which is an ${isEven} number.</p>
+    `;
     res.render('index', { title, content, MODE, PORT });
 });
 
