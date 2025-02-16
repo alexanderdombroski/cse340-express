@@ -5,7 +5,7 @@ import path from 'path';
 const staticPaths = [
    { route: '/css', dir: 'public/css' },
    { route: '/js', dir: 'public/js' },
-   { route: '/image', dir: 'public/image' }
+   { route: '/images', dir: 'public/images' }
 ];
 
 const configureStaticPaths = (app) => {
