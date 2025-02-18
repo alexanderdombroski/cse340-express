@@ -11,6 +11,8 @@ import layouts from './src/middleware/layouts.js';
 import configureStaticPaths from './src/middleware/static-paths.js';
 import { notFoundHandler, globalErrorHandler } from './src/middleware/error-handler.js';
 import devModeMiddleware from './src/middleware/devMode.js';
+import { setupDatabase } from './src/database/index.js';
+
 
 // Get the current file path and directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -48,6 +50,7 @@ app.use(globalErrorHandler);
 
 // Start the server on the specified port
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+    await setupDatabase();
     console.log(`Server running on http://127.0.0.1:${PORT}`);
 });
