@@ -1,13 +1,6 @@
 import { Router } from 'express';
-import { getNav } from '../utils/navigation.js';
 
 const router = Router();
- 
-router.use(async (req, res, next) => {
-    const nav = await getNav();
-    res.locals.nav = nav;
-    next();
-});
 
 // The home page route
 router.get('/', async (req, res) => {

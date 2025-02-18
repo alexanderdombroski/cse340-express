@@ -1,4 +1,6 @@
-const assetMiddleware = (req, res, next) => {
+import { getNav } from "../utils/navigation.js";
+
+const assetMiddleware = async (req, res, next) => {
     res.locals.scripts = []
     res.locals.styles = []
     
@@ -14,6 +16,8 @@ const assetMiddleware = (req, res, next) => {
         }
     };
     res.addStyle("/css/main.css")
+
+    res.locals.navHTML = await getNav();
 
     next();
 }

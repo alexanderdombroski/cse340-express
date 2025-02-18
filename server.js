@@ -6,6 +6,7 @@ import assetMiddleware from './src/middleware/injected-assets.js';
  
 // Import all other required modules: Route handlers, Middleware, etc.
 import baseRoute from './src/routes/index.js';
+import categoryRoute from './src/routes/category/index.js';
 import layouts from './src/middleware/layouts.js';
 import configureStaticPaths from './src/middleware/static-paths.js';
 import { notFoundHandler, globalErrorHandler } from './src/middleware/error-handler.js';
@@ -36,6 +37,8 @@ app.use(layouts);
  
 // Use the home route for the root URL
 app.use('/', baseRoute);
+// Handle all request for a category of games
+app.use('/category', categoryRoute);
 
 // Apply error handlers
 app.use(notFoundHandler);
