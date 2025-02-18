@@ -37,6 +37,11 @@ app.set('layout default', 'default');
 app.set('layouts', path.join(__dirname, 'src/views/layouts'));
 app.use(layouts);
  
+// Middleware to parse JSON data in request body
+app.use(express.json());
+// Middleware to parse URL-encoded form data (like from a standard HTML form)
+app.use(express.urlencoded({ extended: true }));
+
 // Use the home route for the root URL
 app.use('/', baseRoute);
 // Handle all request for a category of games
@@ -45,7 +50,6 @@ app.use('/category', categoryRoute);
 // Apply error handlers
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
- 
 
 
 // Start the server on the specified port
