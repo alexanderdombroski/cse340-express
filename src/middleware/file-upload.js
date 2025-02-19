@@ -26,11 +26,9 @@ fs.readdirSync(tmpDir).forEach((file) => {
 const fileUploads = (req, res, next) => {
     // Skip middleware if request is not multipart form data
     if (!req.is('multipart/form-data')) {
-        console.log("NOt MUlti?")
         return next();
     }
  
-    console.log("before formidable")
     // Configure formidable options for file handling
     const form = formidable({
         allowEmptyFiles: true,      // Allow empty file uploads or forms would break
@@ -39,7 +37,6 @@ const fileUploads = (req, res, next) => {
         multiples: true,            // Allow multiple file uploads
         uploadDir: tmpDir           // Directory to store uploaded files
     });
-    console.log(form);
  
     // Parse the multipart form data
     form.parse(req, (err, fields, files) => {

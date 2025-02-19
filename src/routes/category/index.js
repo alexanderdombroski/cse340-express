@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { getClassifications, getGamesByClassification } from '../../models/index.js';
-import { addNewGame } from '../../models/category.js';
+import { addNewGame, getClassifications, getGamesByClassification } from '../../models/index.js';
 
 // Helper function to verify and move uploaded game image
 const getVerifiedGameImage = (images = []) => {
@@ -22,6 +21,7 @@ const getVerifiedGameImage = (images = []) => {
             fs.unlinkSync(image.filepath);
         }
     });
+ 
     // Return the new frontend image path for storage in the database
     return `/images/games/${image.newFilename}`;
 };
@@ -39,7 +39,7 @@ router.get('/view/:id', async (req, res, next) => {
         const error = new Error(title);
         error.title = title;
         error.status = 404;
-        next(error); //  <-- Pass the error to the global error handler
+        next(error);
         return;
     }
 
@@ -49,7 +49,7 @@ router.get('/view/:id', async (req, res, next) => {
             games[i].image_path = 'https://placehold.co/300x300/jpg'
         }
     }
-
+    
     res.render('category/index', { title, games });
 });
 
@@ -58,14 +58,13 @@ router.get('/add', async (req, res) => {
     const classifications = await getClassifications();
     res.render('category/add', { title: 'Add New Game', classifications });
 });
- 
+
 // Add route to accept new game information
 router.post('/add', async (req, res) => {
     const { game_name, game_description, classification_id } = req.body;
-    console.log(req.files?.image);
     const image_path = getVerifiedGameImage(req.files?.image);
     await addNewGame(game_name, game_description, classification_id, image_path);
     res.redirect(`/category/view/${classification_id}`);
 });
- 
+
 export default router;
