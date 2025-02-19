@@ -12,7 +12,7 @@ import configureStaticPaths from './src/middleware/static-paths.js';
 import { notFoundHandler, globalErrorHandler } from './src/middleware/error-handler.js';
 import devModeMiddleware from './src/middleware/devMode.js';
 import { setupDatabase } from './src/database/index.js';
-
+import fileUploads from './src/middleware/file-upload.js';
 
 // Get the current file path and directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +23,14 @@ const app = express();
 
 // Serve static files from the public directory
 configureStaticPaths(app);
+
+// Middleware to parse JSON data in request body
+app.use(express.json());
+// Middleware to parse URL-encoded form data (like from a standard HTML form)
+app.use(express.urlencoded({ extended: true }));
+
+// Form Middleware
+app.use(fileUploads);
 
 // Set up Global Scripts and Styles
 app.use(assetMiddleware);
@@ -36,11 +44,7 @@ app.set('views', path.join(__dirname, 'src/views'));
 app.set('layout default', 'default');
 app.set('layouts', path.join(__dirname, 'src/views/layouts'));
 app.use(layouts);
- 
-// Middleware to parse JSON data in request body
-app.use(express.json());
-// Middleware to parse URL-encoded form data (like from a standard HTML form)
-app.use(express.urlencoded({ extended: true }));
+
 
 // Use the home route for the root URL
 app.use('/', baseRoute);

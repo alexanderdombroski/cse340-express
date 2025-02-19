@@ -1,3 +1,5 @@
+import dbPromise from "../database/index.js";
+
 const addNewGame = async (name, description, classification_id, image_path = '') => {
     const db = await dbPromise;
     const sql = `
