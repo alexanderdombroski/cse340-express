@@ -38,10 +38,15 @@ app.set('views', path.join(__dirname, 'src/views'));
 // Set Layouts middleware to automatically wrap views in a layout and configure default layout
 app.set('layout default', 'default');
 app.set('layouts', path.join(__dirname, 'src/views/layouts'));
+
+// Middleware to process multipart form data with file uploads
+app.use(fileUploads);
+
 app.use(layouts);
 
 // Middleware to parse JSON data in request body
 app.use(express.json());
+
 
 // Middleware to parse URL-encoded form data (like from a standard HTML form)
 app.use(express.urlencoded({ extended: true }));
@@ -51,9 +56,6 @@ app.use('/', baseRoute);
 
 // Handle all request for a category of games
 app.use('/category', categoryRoute);
-
-// Middleware to process multipart form data with file uploads
-app.use(fileUploads);
 
 // Apply error handlers
 app.use(notFoundHandler);

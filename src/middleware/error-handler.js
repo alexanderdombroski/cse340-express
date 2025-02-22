@@ -91,7 +91,8 @@ export const globalErrorHandler = (err, req, res, next) => {
         title: err.title || 'Error',
         error: err.message,
         status,
-        ...res.locals // Include any other properties set by other middleware
+        ...res.locals, // Include any other properties set by other middleware
+        stack: err.stack
     };
 
     // Determine the correct error view file
