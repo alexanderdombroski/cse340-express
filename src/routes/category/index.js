@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { addNewGame, getClassifications, getGamesByClassification, getGameById } from '../../models/index.js';
+import { updateGame, addNewGame, getClassifications, getGamesByClassification, getGameById } from '../../models/index.js';
 import path from 'path';
 import fs from 'fs';
 
