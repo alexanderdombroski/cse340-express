@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { deleteGame, updateGame, addNewGame, getClassifications, getGamesByClassification, getGameById } from '../../models/index.js';
+import { addClassification, getClassificationByName, deleteClassification, deleteGame, updateGame, addNewGame, getClassifications, getGamesByClassification, getGameById } from '../../models/index.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -35,13 +35,9 @@ router.get('/view/:id', async (req, res, next) => {
     const games = await getGamesByClassification(req.params.id);
     const title = `${games[0]?.classification_name || ''} Games`.trim();
 
-    // If no games are found, throw a 404 error
+    // If no games are found, go to empty games page
     if (games.length <= 0) {
-        const title = 'Category Not Found';
-        const error = new Error(title);
-        error.title = title;
-        error.status = 404;
-        next(error);
+        res.render('category/empty', {title: "New Category"});
         return;
     }
 
@@ -134,6 +130,25 @@ router.post('/delete/:id', async (req, res) => {
  
     // Return to game category view page
     res.redirect(`/category/view/${oldGameData.classification_id}`);
+});
+
+router.get("/add-category", async (req, res) => {
+
+    res.render('/category/add-category', { title: "Add Category"});
+});
+router.post("/add-category", async (req, res) => {
+    const name = req.body.category_name;
+    await addClassification(name);
+    const classification = await getClassificationByName(name);
+    res.redirect(`/category/view/${classification.classification_id}`);
+});
+
+router.get("/delete-category", async (req, res) => {
+    
+    res.render('category/delete-category', { title: "Delete Category"});
+});
+router.post("/delete-category", async (req, res) => {
+
 });
 
 export default router;

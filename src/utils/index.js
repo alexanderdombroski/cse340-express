@@ -11,6 +11,8 @@ const getNav = async () => {
     return `
     ${nav}
         <li><a href="/category/add">Add Game</a></li>
+        <li><a href="/category/add-category">Add Category</a></li>
+        <li><a href="/category/delete-category">Delete Category</a></li>
         <li><a href="/About">About Me</a></li>
         </ul>
     </nav>`;

@@ -67,7 +67,32 @@ async function deleteGame(gameId) {
     const db = await dbPromise;
 
     const sql = "DELETE FROM game WHERE game_id = ?;";
-    return await db.run(sql, [gameId])
+    return await db.run(sql, [gameId]);
 }
 
-export { deleteGame, addNewGame, getClassifications, getGamesByClassification, getGameById, updateGame };
+async function addClassification(name) {
+    const db = await dbPromise;
+    const exists = await getClassificationByName(name);
+    if (exists) return;
+
+    const sql = `
+        INSERT INTO classification (classification_name)
+        VALUES (?)
+    `;
+    return await db.run(sql, [name]);
+}
+async function getClassificationByName(name) {
+    const db = await dbPromise;
+    const sql = `
+        SELECT * FROM classification
+        WHERE classification_name == ?;
+    `;
+    return await db.get(sql, [name]);
+}
+async function deleteClassification(classification_id) {
+    const db = await dbPromise;
+    const sql = "DELETE FROM classification WHERE game_id = ?;";
+    return await db.run(sql, [classification_id]);
+}
+
+export { getClassificationByName, addClassification, deleteClassification, deleteGame, addNewGame, getClassifications, getGamesByClassification, getGameById, updateGame };
