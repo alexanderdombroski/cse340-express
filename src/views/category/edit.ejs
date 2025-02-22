@@ -1,29 +1,34 @@
-<form action="/category/add" method="POST">
+<form action="/category/edit/<%= game.game_id %>" method="POST" enctype="multipart/form-data">
+    <!-- Display the current game image here, or use https://placehold.co/300x300/jpg if none exists -->
+    <img class="game-image" src="..." alt="Game Image">
+ 
     <div>
         <label for="game_name">Game Name:</label>
-        <input type="text" id="game_name" name="game_name" required>
+        <%= game.game_name %>
+        <input type="text" id="game_name" name="game_name" value="..." required="">
     </div>
-
+ 
     <div>
         <label for="game_description">Game Description:</label>
-        <textarea id="game_description" name="game_description" required></textarea>
+        <%= game.Description %>
+        <textarea id="game_description" name="game_description" required="">...</textarea>
     </div>
-
+ 
     <div>
         <label for="classification_id">Classification:</label>
         <select id="classification_id" name="classification_id" required>
             <option value="" disabled selected>Select Classification</option>
-            <!-- Add Options -->
+            <!-- Loop through classifications and select the correct one -->
             <% classifications.forEach(c => { %>
                 <option value="<%= c.classification_id %>" name="<%= c.classification_name %>"><%= c.classification_name %></option>
             <% }) %>
         </select>
     </div>
-
+ 
     <div>
         <label for="image">Image:</label>
         <input type="file" id="image" name="image">
     </div>
-
-    <button type="submit">Add Game</button>
+ 
+    <button type="submit">Update Game</button>
 </form>
