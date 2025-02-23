@@ -63,9 +63,18 @@ async function updateGame(gameId, name, description, classificationId, imagePath
     return await db.run(sql, [name, description, classificationId, imagePath, gameId]);
 }
 
+async function getImageByGameId(gameId) {
+    const db = await dbPromise;
+    const sql = `
+        SELECT image_path
+        FROM game
+        WHERE game_id = ?;
+    `;
+    return db.get(sql, [gameId]);
+}
+
 async function deleteGame(gameId) {
     const db = await dbPromise;
-
     const sql = "DELETE FROM game WHERE game_id = ?;";
     return await db.run(sql, [gameId]);
 }
@@ -91,8 +100,26 @@ async function getClassificationByName(name) {
 }
 async function deleteClassification(classification_id) {
     const db = await dbPromise;
-    const sql = "DELETE FROM classification WHERE game_id = ?;";
+    const sql = "DELETE FROM classification WHERE classification_id = ?;";
     return await db.run(sql, [classification_id]);
 }
 
-export { getClassificationByName, addClassification, deleteClassification, deleteGame, addNewGame, getClassifications, getGamesByClassification, getGameById, updateGame };
+async function moveGamesToNewClassification(oldClassificationId, newClassificationId) {
+    const db = await dbPromise;
+
+    const gamesToMove = await getGamesByClassification(oldClassificationId);
+    const gameIds = gamesToMove.map(game => game.game_id);
+
+    if (gameIds.length === 0) return;
+
+    // Update the games in the database
+    const sql = `
+        UPDATE game
+        SET classification_id = ?
+        WHERE game_id IN (${gameIds.join(',')});
+    `;
+
+    return await db.run(sql, [newClassificationId]);
+}
+
+export { moveGamesToNewClassification, getClassificationByName, addClassification, deleteClassification, deleteGame, addNewGame, getClassifications, getGamesByClassification, getGameById, updateGame };

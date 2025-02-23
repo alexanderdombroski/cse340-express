@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { addClassification, getClassificationByName, deleteClassification, deleteGame, updateGame, addNewGame, getClassifications, getGamesByClassification, getGameById } from '../../models/index.js';
+import { addClassification, getClassificationByName, deleteClassification, deleteGame, updateGame, addNewGame, getClassifications, getGamesByClassification, getGameById, moveGamesToNewClassification } from '../../models/index.js';
 import path from 'path';
 import fs from 'fs';
+import { deleteImageFile } from '../../utils/index.js';
+import { serverDirname } from '../../../globals.js';
 
 // Helper function to verify and move uploaded game image
 const getVerifiedGameImage = (images = []) => {
@@ -133,7 +135,6 @@ router.post('/delete/:id', async (req, res) => {
 });
 
 router.get("/add-category", async (req, res) => {
-
     res.render('/category/add-category', { title: "Add Category"});
 });
 router.post("/add-category", async (req, res) => {
@@ -144,11 +145,22 @@ router.post("/add-category", async (req, res) => {
 });
 
 router.get("/delete-category", async (req, res) => {
-    
-    res.render('category/delete-category', { title: "Delete Category"});
+    const classifications = await getClassifications()
+    res.render('category/delete-category', { title: "Delete Category", classifications });
 });
 router.post("/delete-category", async (req, res) => {
-
+    if (req.body.new_category_id !== "delete") {
+        await moveGamesToNewClassification(req.body.category_id_to_delete, req.body.new_category_id);
+        await deleteClassification(req.body.category_id_to_delete);
+        res.redirect(`/category/view/${req.body.new_category_id}`);
+        return;
+    }
+    
+    const games = await getGamesByClassification(req.body.category_id_to_delete);
+    const paths = games.map(g => g.image_path);
+    paths.forEach(async p => await deleteImageFile(path.join(serverDirname, "/public", p)));
+    await deleteClassification(req.body.category_id_to_delete)
+    res.redirect("/category/delete-category");
 });
 
 export default router;
