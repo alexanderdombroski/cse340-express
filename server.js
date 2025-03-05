@@ -6,13 +6,16 @@ import { fileURLToPath } from 'url';
 // Import all other required modules: Route handlers, Middleware, etc.
 import baseRoute from './src/routes/index.js';
 import categoryRoute from './src/routes/category/index.js';
+import accountRoute from './src/routes/account/index.js'
 import configNodeEnv from './src/middleware/node-env.js';
 import configureStaticPaths from './src/middleware/static-paths.js';
+import fileUploads from './src/middleware/file-uploads.js';
+import gameRoute from './src/routes/game/index.js';
 import layouts from './src/middleware/layouts.js';
 import { notFoundHandler, globalErrorHandler } from './src/middleware/error-handler.js';
 import { setupDatabase } from './src/database/index.js';
-import fileUploads from './src/middleware/file-upload.js';
-
+import sessionMiddleware from './src/middleware/session.js';
+import flashMessages from './src/middleware/flash-messages.js';
 
 // Get the current file path and directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +27,10 @@ const mode = process.env.MODE || 'production';
 
 // Create an instance of an Express application
 const app = express();
+
+// Config Sessions (first global middleware)
+app.use(sessionMiddleware);
+app.use(flashMessages);
 
 // Configure the application based on environment settings
 app.use(configNodeEnv);
@@ -38,15 +45,13 @@ app.set('views', path.join(__dirname, 'src/views'));
 // Set Layouts middleware to automatically wrap views in a layout and configure default layout
 app.set('layout default', 'default');
 app.set('layouts', path.join(__dirname, 'src/views/layouts'));
+app.use(layouts);
 
 // Middleware to process multipart form data with file uploads
 app.use(fileUploads);
 
-app.use(layouts);
-
 // Middleware to parse JSON data in request body
 app.use(express.json());
-
 
 // Middleware to parse URL-encoded form data (like from a standard HTML form)
 app.use(express.urlencoded({ extended: true }));
@@ -54,8 +59,14 @@ app.use(express.urlencoded({ extended: true }));
 // Use the home route for the root URL
 app.use('/', baseRoute);
 
-// Handle all request for a category of games
+// Handle routes specific to the games
+app.use('/game', gameRoute);
+
+// Handle routes specific to the categories
 app.use('/category', categoryRoute);
+
+// Handle routes specific to the accounts
+app.use('/account', accountRoute);
 
 // Apply error handlers
 app.use(notFoundHandler);

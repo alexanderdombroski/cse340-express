@@ -4,9 +4,11 @@ const port = process.env.PORT || 3000;
 const mode = process.env.MODE || 'production';
 
 const configureNodeEnvironment = async (req, res, next) => {
+    const isLoggedIn = req.session.user ? true : false;
+    res.locals.isLoggedIn = isLoggedIn
     res.locals.devModeWarning = '';
     res.locals.isDevMode = mode.includes('dev');
-    res.locals.navHTML = await getNav();
+    res.locals.navHTML = await getNav(isLoggedIn); // Pass in isloggedin to see what needs rendered
     res.locals.port = port;
     res.locals.scripts = [];
     res.locals.styles = [];

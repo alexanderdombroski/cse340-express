@@ -1,20 +1,20 @@
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
- 
+
 // Define temporary directory for file uploads
 const tmpDir = path.join(process.cwd(), 'public/images/tmp');
- 
+
 // Create upload directory if it doesn't exist
 if (!fs.existsSync(tmpDir)) {
     fs.mkdirSync(tmpDir, { recursive: true });
 }
- 
+
 // Clear temporary directory on server startup
 fs.readdirSync(tmpDir).forEach((file) => {
     fs.unlinkSync(path.join(tmpDir, file));
 });
- 
+
 /**
  * Express middleware that processes multipart form data with file uploads
  * 
@@ -28,7 +28,7 @@ const fileUploads = (req, res, next) => {
     if (!req.is('multipart/form-data')) {
         return next();
     }
- 
+  
     // Configure formidable options for file handling
     const form = formidable({
         allowEmptyFiles: true,      // Allow empty file uploads or forms would break
@@ -37,32 +37,22 @@ const fileUploads = (req, res, next) => {
         multiples: true,            // Allow multiple file uploads
         uploadDir: tmpDir           // Directory to store uploaded files
     });
- 
+    
     // Parse the multipart form data
     form.parse(req, (err, fields, files) => {
         if (err) {
             next(err);
             return;
         }
- 
-        /**
-         * When you fill out a form, some fields can have multiple answers (like checkboxes). 
-         * Express treats a field with one answer as a single value, but Formidable always
-         * uses a list. We're modifying Formidable's data to match how Express handles it,
-         * using a single value if there is only one answer.
-        */
+
+        // Normalize single-item arrays to scalar values in fields
         for (const key in fields) {
             if (Array.isArray(fields[key]) && fields[key].length === 1) {
                 fields[key] = fields[key][0];
             }
         }
- 
-        /**
-         * Remove empty file fields and clean up temporary files. By default, Formidable
-         * expects a file to be uploaded for every file input. We enabled a setting to allow 
-         * empty files, but this creates unnecessary temporary files when no file is uploaded. 
-         * We automatically delete these empty files and remove them from the file list.
-         */
+
+        // Remove empty file fields from files object and cleanup temp files
         for (const key in files) {
             const images = files[key];
             if (Array.isArray(images)) {
@@ -82,12 +72,12 @@ const fileUploads = (req, res, next) => {
                 }
             }
         }
- 
+    
         // Attach parsed data to request object
         req.body = fields;
         req.files = files;
         next();
     });
 };
- 
+
 export default fileUploads;

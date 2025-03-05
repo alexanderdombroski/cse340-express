@@ -1,45 +1,76 @@
 import { Router } from 'express';
-import { addClassification, getClassificationByName, deleteClassification, deleteGame, updateGame, addNewGame, getClassifications, getGamesByClassification, getGameById, moveGamesToNewClassification } from '../../models/index.js';
-import path from 'path';
-import fs from 'fs';
-import { deleteImageFile } from '../../utils/index.js';
-import { serverDirname } from '../../../globals.js';
-
-// Helper function to verify and move uploaded game image
-const getVerifiedGameImage = (images = []) => {
-    // Exit early if no valid images array provided
-    if (!images || images.length === 0) {
-        return '';
-    }
- 
-    // Process first image (assuming single image upload)
-    const image = images[0];
-    const imagePath = path.join(process.cwd(), `public/images/games/${image.newFilename}`);
- 
-    // Move uploaded file from temp location to permanent storage
-    fs.renameSync(image.filepath, imagePath);
- 
-    // Cleanup by removing any remaining temporary files
-    images.forEach(image => {
-        if (fs.existsSync(image.filepath)) {
-            fs.unlinkSync(image.filepath);
-        }
-    });
- 
-    // Return the new frontend image path for storage in the database
-    return `/images/games/${image.newFilename}`;
-};
+import { addCategory, deleteCategory, getCategories } from '../../models/category/index.js';
+import { getGamesByCategory, moveGamesToCategory } from '../../models/game/index.js';
+import { requireAuth } from "../../utils/index.js";
 
 const router = Router();
 
-// Game category route
-router.get('/view/:id', async (req, res, next) => {
-    const games = await getGamesByClassification(req.params.id);
-    const title = `${games[0]?.classification_name || ''} Games`.trim();
+// Add a new category route (view)
+router.get('/add', requireAuth, async (req, res) => {
+    res.render('category/add', { title: 'Add Category' });
+});
 
-    // If no games are found, go to empty games page
+// Add a new category route (form submission)
+router.post('/add', async (req, res) => {
+    // If the category is missing, redirect back to the form
+    const category = req.body.name;
+    if (!category) {
+        res.redirect('/category/add');
+        return;
+    }
+
+
+    const result = await addCategory(category);
+    
+    // If the category was added successfully, redirect to the new category
+    if (result.changes === 1) {
+        res.redirect(`/category/${result.lastID}`);
+        return;
+    }
+
+    // If the category was not added successfully, redirect back to the form
+    res.redirect('/category/add');
+});
+
+// Delete a category route (view)
+router.get('/delete', requireAuth, async (req, res) => {
+    const categories = await getCategories();
+    res.render('category/delete', { title: 'Delete Category', categories });
+});
+
+// Delete a category route (form submission)
+router.post('/delete/:id', async (req, res) => {
+    const category = req.params.id;
+    const newCategory = req.body.new_category_id;
+
+    // If the new category is missing or matches the existing, redirect back to the form
+    if (!newCategory || category === newCategory) {
+        res.redirect('/category/delete');
+        return;
+    }
+
+    // If a new category is selected, move the games to the new category
+    if (newCategory.toLowerCase() !== 'delete') {
+        await moveGamesToCategory(category, newCategory);
+    }
+
+    // Delete the category
+    await deleteCategory(category);
+    res.redirect('/category/delete');
+});
+
+// View games by category route (view)
+router.get('/view/:id', async (req, res, next) => {
+    const games = await getGamesByCategory(req.params.id);
+    const title = `${games[0]?.category_name || ''} Games`.trim();
+
+    // If no games are found, throw a 404 error
     if (games.length <= 0) {
-        res.render('category/empty', {title: "New Category"});
+        const title = 'Category Not Found';
+        const error = new Error(title);
+        error.title = title;
+        error.status = 404;
+        next(error);
         return;
     }
 
@@ -51,116 +82,6 @@ router.get('/view/:id', async (req, res, next) => {
     }
     
     res.render('category/index', { title, games });
-});
-
-// Add game route 
-router.get('/add', async (req, res) => {
-    const classifications = await getClassifications();
-    res.render('category/add', { title: 'Add New Game', classifications });
-});
-
-// Add route to accept new game information
-router.post('/add', async (req, res) => {
-    const { game_name, game_description, classification_id } = req.body;
-    const image_path = getVerifiedGameImage(req.files?.image);
-    await addNewGame(game_name, game_description, classification_id, image_path);
-    res.redirect(`/category/view/${classification_id}`);
-});
-
-// Edit game route
-router.get('/edit/:id', async (req, res) => {
-    const classifications = await getClassifications();
-    const game = await getGameById(req.params.id);
-    res.render('category/edit', { title: 'Edit Game', classifications, game });
-});
-
-// Edit route to accept updated game information
-router.post('/edit/:id', async (req, res) => {
-    // Get existing game data to handle image replacement
-    const oldGameData = await getGameById(req.params.id);
- 
-    // Extract form data and process any uploaded image
-    const { game_name, game_description, classification_id } = req.body;
-    const image_path = getVerifiedGameImage(req.files?.image);
- 
-    // Update game details in database
-    await updateGame(req.params.id, game_name, game_description, classification_id, image_path);
- 
-    // Clean up old image file if a new one was uploaded
-    if (image_path && image_path !== oldGameData.image_path) {
-        const oldImagePath = path.join(process.cwd(), `public${oldGameData.image_path}`);
-        if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
-            fs.unlinkSync(oldImagePath);
-        }
-    }
- 
-    // Return to game category view page
-    res.redirect(`/category/view/${classification_id}`);
-});
-
-router.post('/edit/:id', async (req, res) => {
-    // Get existing game data to handle image replacement
-    const oldGameData = await getGameById(req.params.id);
- 
-    // Extract form data and process any uploaded image
-    const { game_name, game_description, classification_id } = req.body;
-    const image_path = getVerifiedGameImage(req.files?.image);
- 
-    // Update game details in database
-    await updateGame(req.params.id, game_name, game_description, classification_id, image_path);
- 
-    // Clean up old image file if a new one was uploaded
-    if (image_path && image_path !== oldGameData.image_path) {
-        const oldImagePath = path.join(process.cwd(), `public${oldGameData.image_path}`);
-        if (fs.existsSync(oldImagePath) && fs.lstatSync(oldImagePath).isFile()) {
-            fs.unlinkSync(oldImagePath);
-        }
-    }
- 
-    // Return to game category view page
-    res.redirect(`/category/view/${classification_id}`);
-});
-
-router.post('/delete/:id', async (req, res) => {
-    const oldGameData = await getGameById(req.params.id);
-    // Update game details in database
-    await deleteGame(req.params.id);
- 
-    // Delete this file
-    const oldImagePath = path.join(process.cwd(), `public${oldGameData.image_path}`);
-    await fs.promises.unlink(oldImagePath);
- 
-    // Return to game category view page
-    res.redirect(`/category/view/${oldGameData.classification_id}`);
-});
-
-router.get("/add-category", async (req, res) => {
-    res.render('/category/add-category', { title: "Add Category"});
-});
-router.post("/add-category", async (req, res) => {
-    const name = req.body.category_name;
-    await addClassification(name);
-    const classification = await getClassificationByName(name);
-    res.redirect(`/category/view/${classification.classification_id}`);
-});
-
-router.get("/delete-category", async (req, res) => {
-    const classifications = await getClassifications()
-    res.render('category/delete-category', { title: "Delete Category", classifications });
-});
-router.post("/delete-category", async (req, res) => {
-    if (req.body.new_category_id !== "delete") {
-        await moveGamesToNewClassification(req.body.category_id_to_delete, req.body.new_category_id);
-        await deleteClassification(req.body.category_id_to_delete);
-        res.redirect(`/category/view/${req.body.new_category_id}`);
-        return;
-    }
-    
-    const games = await getGamesByClassification(req.body.category_id_to_delete);
-    const paths = games.map(g => g.image_path);
-    paths.forEach(async p => await deleteImageFile(path.join(serverDirname, "/public", p)));
-    await deleteClassification(req.body.category_id_to_delete)
-    res.redirect("/category/delete-category");
 });
 
 export default router;
